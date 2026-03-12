@@ -315,16 +315,36 @@ function clearHistory() {
 
 function saveImage(id) {
     html2canvas(document.getElementById(id)).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `도배산출서_${Date.now()}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+        const dataURL = canvas.toDataURL('image/png');
+        
+        // 안드로이드 앱(AndroidBridge) 연결 확인
+        if (window.AndroidBridge && window.AndroidBridge.saveImage) {
+            window.AndroidBridge.saveImage(dataURL);
+        } else {
+            // 일반 웹 브라우저용 (기본값)
+            const link = document.createElement('a');
+            link.download = `도배산출서_${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+        }
     });
 }
 
 function shareResult(id) {
-    const text = document.getElementById(id).innerText;
-    if (navigator.share) { navigator.share({ title: '도배 산출 결과', text: text }); }
+    const text = "도배 자재 산출 결과입니다."; 
+    html2canvas(document.getElementById(id)).then(canvas => {
+        const dataURL = canvas.toDataURL('image/png');
+
+        // 안드로이드 앱(AndroidBridge) 연결 확인
+        if (window.AndroidBridge && window.AndroidBridge.shareResult) {
+            window.AndroidBridge.shareResult(dataURL, text);
+        } else if (navigator.share) {
+            // 일반 모바일 브라우저 공유
+            navigator.share({ title: '결과', text: text, url: window.location.href });
+        } else {
+            alert("이 환경에서는 공유 기능을 지원하지 않습니다.");
+        }
+    });
 }
 </script>
 </body>
