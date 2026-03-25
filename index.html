@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>도배 관리 v2.7 (Onu Global Standard - Expert Edition)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    /* Onu 플랫폼 상용화 표준 디자인 (Cobalt Blue & Cool Gray) */
+    :root {
+        --primary: #2563eb; 
+        --primary-hover: #1d4ed8;
+        --bg: #f1f5f9; 
+        --card: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --input-bg: #f8fafc; 
+        --border: #cbd5e1; 
+        --nav-bg: rgba(255, 255, 255, 0.95);
+        --error: #ef4444;
+        --success: #10b981;
+        --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+        --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+    [data-theme="dark"] {
+        --bg: #0f172a; 
+        --card: #1e293b;
+        --text: #f8fafc;
+        --text-muted: #94a3b8;
+        --input-bg: #0f172a;
+        --border: #334155;
+        --nav-bg: rgba(30, 41, 59, 0.95);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+    
+    body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; color: var(--text); transition: background 0.3s ease, color 0.3s ease; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 480px; min-height: 100vh; position: relative; padding-bottom: 30px; }
+    
+    .tab-header { display: flex; background: var(--nav-bg); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 16px 0; border: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; position: relative; }
+    .tab-btn::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 0; height: 3px; background: var(--primary); transition: width 0.3s ease; border-radius: 3px 3px 0 0; }
+    .tab-btn.active { color: var(--primary); font-weight: 700; }
+    .tab-btn.active::after { width: 100%; }
+
+    .tab-content { display: none; padding: 20px 15px; animation: fadeIn 0.2s ease-out; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+    h3 { margin: 0 0 14px 0; font-size: 14px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+    
+    input, select { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 14px; width: 100%; box-sizing: border-box; transition: all 0.2s ease; }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+    
+    .area-grid { display: grid; grid-template-columns: 1fr; gap: 14px; } 
+    .area-block { position: relative; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--input-bg); }
+    .remove-btn { position: absolute; top: -10px; right: -10px; background: var(--error); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+    
+    .area-inputs { display: flex; gap: 10px; margin-top: 8px; }
+    .area-inputs input { flex: 1; text-align: center; } 
+    
+    .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: 500; }
+    .setting-row input { width: 110px; text-align: right; }
+
+    .preset-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .preset-item { padding: 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; background: var(--card); }
+    .preset-item:hover { border-color: var(--primary); color: var(--primary); }
+    .preset-item span { font-weight: 600; }
+    .preset-item small { color: var(--text-muted); }
+    
+    .btn-main { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; font-size: 15px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+    .btn-sub { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 12px; font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; flex: 1; text-align: center; }
+
+    .doc-preview { background: var(--card); padding: 20px; border-radius: 10px; font-size: 13px; color: var(--text); line-height: 1.6; border: 1px solid var(--border); }
+    .history-item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; background: var(--card); overflow: hidden; }
+    .history-header { padding: 18px; display: flex; justify-content: space-between; align-items: center; }
+    
+    .summary-stats { display: flex; justify-content: space-around; padding: 16px; background: var(--primary); color: white; border-radius: 10px; margin: 16px 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+    .stat-item { text-align: center; }
+    .stat-item div:first-child { font-size: 11px; opacity: 0.85; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 800; }
+</style>
+</head>
+<body data-theme="light">
+
+<div class="container">
+    <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab('calcTab')">계산기</button>
+        <button class="tab-btn" onclick="switchTab('historyTab')">기록</button>
+        <button class="tab-btn" onclick="switchTab('configTab')">설정</button>
+    </div>
+
+    <div id="calcTab" class="tab-content active">
+        <div class="card">
+            <h3>프로젝트 현장명</h3>
+            <input type="text" id="projectName" placeholder="현장 이름을 입력해 주세요" oninput="saveTempData()">
+        </div>
+
+        <div class="card">
+            <h3>면적 데이터 <button onclick="addArea()" style="padding:6px 12px; background:var(--text); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">+ 추가</button></h3>
+            <div id="areas" class="area-grid"></div>
+            <small style="color:var(--text-muted); font-size:11px; margin-top:10px; display:block;">※ 시공 면적은 항상 미터(m) 단위로 입력하세요.</small>
+        </div>
+
+        <button class="btn-main" onclick="calculate()">물량 산출 및 기록 저장</button>
+
+        <div id="resultSection" style="display:none; margin-top:24px;">
+            <div id="documentSection" class="doc-preview"></div>
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button class="btn-sub" style="background:var(--success); color:white; border:none;" onclick="saveImageNative('documentSection')">갤러리 저장</button>
+                <button class="btn-sub" onclick="shareResultNative('documentSection')">결과 공유하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyTab" class="tab-content">
+        <div id="historyList"></div>
+        <button class="btn-sub" style="width:100%; color:var(--error); border-color:var(--error); background:transparent; margin-top:20px;" onclick="clearHistory()">모든 기록 삭제</button>
+    </div>
+
+    <div id="configTab" class="tab-content">
+        <div class="card">
+            <h3>🌍 글로벌 자재 라이브러리 (정밀 규격)</h3>
+            <div class="preset-list">
+                <div class="preset-item" onclick="setPreset(15.6, 1.06, 'metric', '실크 벽지 (광폭)')">
+                    <span>실크 벽지 (광폭)</span><small>15.6m × 1.06m</small>
+                </div>
+                <div class="preset-item" onclick="setPreset(17.75, 1.06, 'metric', '합지 벽지 (광폭)')">
+                    <span>합지 벽지 (광폭)</span><small>17.75m × 1.06m</small>
+                </div>
+                <div class="preset-item" onclick="setPreset(12.5, 0.53, 'metric', '합지 벽지 (소폭)')">
+                    <span>합지 벽지 (소폭)</span><small>12.5m × 0.53m</small>
+                </div>
+                <div class="preset-item" onclick="setPreset(33, 20.5, 'imperial', '북미 표준 (Double Roll)')">
+                    <span>북미 표준 (Double)</span><small>33ft × 20.5"</small>
+                </div>
+                <div class="preset-item" onclick="setPreset(10.05, 0.53, 'metric', '유럽 표준 (Euro)')">
+                    <span>유럽 표준 (Euro)</span><small>10.05m × 0.53m</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📦 자재 기본 설정 (수동)</h3>
+            <div class="setting-row">
+                <span id="labelRollLength">롤 길이 (m)</span>
+                <input type="number" step="0.01" id="rollLength" value="15.6" oninput="saveTempData()">
+            </div>
+            <div class="setting-row">
+                <span id="labelRollWidth">롤 폭 (m)</span>
+                <input type="number" step="0.01" id="rollWidth" value="1.06" oninput="saveTempData()">
+            </div>
+            <div class="setting-row">
+                <span>기본 로스율 (%)</span>
+                <input type="number" id="lossRate" value="10" oninput="saveTempData()">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🎨 플랫폼 디스플레이</h3>
+            <button class="btn-sub" style="width:100%; background:var(--text); color:var(--card);" onclick="toggleTheme()">🌓 다크/라이트 모드 전환</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUnit = 'metric';
+let areaCount = 0;
+
+function toggleTheme() {
+    const body = document.body;
+    const newTheme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    body.setAttribute('data-theme', newTheme);
+    localStorage.setItem('wallpaper_theme', newTheme);
+}
+
+function updateUnitLabels() {
+    const lblLength = document.getElementById('labelRollLength');
+    const lblWidth = document.getElementById('labelRollWidth');
+    if(currentUnit === 'imperial') {
+        lblLength.innerText = '롤 길이 (ft)';
+        lblWidth.innerText = '롤 폭 (inch)';
+    } else {
+        lblLength.innerText = '롤 길이 (m)';
+        lblWidth.innerText = '롤 폭 (m)';
+    }
+}
+
+window.onload = () => {
+    const savedTheme = localStorage.getItem('wallpaper_theme');
+    if(savedTheme) document.body.setAttribute('data-theme', savedTheme);
+    loadTempData();
+};
+
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.querySelector(`button[onclick*="${tabId}"]`).classList.add('active');
+    if(tabId === 'historyTab') renderHistory();
+}
+
+function setPreset(l, w, unit, name) {
+    currentUnit = unit;
+    updateUnitLabels();
+    document.getElementById('rollLength').value = l;
+    document.getElementById('rollWidth').value = w;
+    saveTempData();
+    alert(`[${name}] 전문가 규격이 적용되었습니다.`);
+}
+
+function createAreaBlock(title = "", w = "", h = "") {
+    areaCount++;
+    const id = `block_${Date.now()}_${areaCount}`;
+    return `
+    <div class="area-block" id="${id}">
+        <button class="remove-btn" onclick="removeArea('${id}')">×</button>
+        <input type="text" placeholder="공간명 (예: 안방)" value="${title}" oninput="saveTempData()" style="font-size:14px; font-weight:700; border:none; border-bottom:1px solid var(--border); background:transparent; margin-bottom:14px; padding:6px 4px;">
+        <div class="area-inputs">
+            <input type="number" step="0.1" placeholder="가로(m)" value="${w}" oninput="saveTempData()">
+            <input type="number" step="0.1" placeholder="세로(m)" value="${h}" oninput="saveTempData()">
+        </div>
+    </div>`;
+}
+
+function addArea(title = "", w = "", h = "") {
+    document.getElementById('areas').insertAdjacentHTML('beforeend', createAreaBlock(title, w, h));
+    saveTempData();
+}
+
+function removeArea(id) { document.getElementById(id).remove(); saveTempData(); }
+
+function saveTempData() {
+    const data = {
+        projectName: document.getElementById('projectName').value,
+        rollLength: document.getElementById('rollLength').value,
+        rollWidth: document.getElementById('rollWidth').value,
+        lossRate: document.getElementById('lossRate').value,
+        unitType: currentUnit,
+        areas: []
+    };
+    document.querySelectorAll('.area-block').forEach(block => {
+        const inputs = block.querySelectorAll('input');
+        data.areas.push({ title: inputs[0].value, w: inputs[1].value, h: inputs[2].value });
+    });
+    localStorage.setItem('wallpaper_temp', JSON.stringify(data));
+}
+
+function loadTempData() {
+    const saved = localStorage.getItem('wallpaper_temp');
+    document.getElementById('areas').innerHTML = '';
+    if (!saved) { addArea('안방', '4.0', '2.3'); return; }
+    const data = JSON.parse(saved);
+    currentUnit = data.unitType || 'metric';
+    updateUnitLabels();
+    document.getElementById('projectName').value = data.projectName || "";
+    document.getElementById('rollLength').value = data.rollLength || 15.6;
+    document.getElementById('rollWidth').value = data.rollWidth || 1.06;
+    document.getElementById('lossRate').value = data.lossRate || 10;
+    if(data.areas.length > 0) data.areas.forEach(a => addArea(a.title, a.w, a.h));
+    else addArea('안방', '4.0', '2.3');
+}
+
+function calculate() {
+    const projName = document.getElementById('projectName').value || "미지정 현장";
+    const inputL = parseFloat(document.getElementById('rollLength').value);
+    const inputW = parseFloat(document.getElementById('rollWidth').value);
+    
+    const rollLengthM = currentUnit === 'imperial' ? inputL * 0.3048 : inputL;
+    const rollWidthM = currentUnit === 'imperial' ? inputW * 0.0254 : inputW;
+    const rollAreaM2 = rollLengthM * rollWidthM;
+
+    let totalArea = 0;
+    let summary = [];
+    document.querySelectorAll('.area-block').forEach(block => {
+        const ins = block.querySelectorAll('input');
+        const w = parseFloat(ins[1].value) || 0;
+        const h = parseFloat(ins[2].value) || 0;
+        if(w*h > 0) { totalArea += (w*h); summary.push({t: ins[0].value || "공간", w, h, a: w*h}); }
+    });
+
+    const loss = parseFloat(document.getElementById('lossRate').value) || 0;
+    const adjustedArea = totalArea * (1 + loss/100);
+    const finalRoll = Math.ceil(adjustedArea / rollAreaM2);
+    const now = new Date().toLocaleString('ko-KR');
+    
+    const rollSizeText = currentUnit === 'imperial' 
+        ? `${inputL}ft × ${inputW}" (환산: ${rollLengthM.toFixed(2)}m × ${rollWidthM.toFixed(2)}m)`
+        : `${inputL}m × ${inputW}m`;
+
+    const docHtml = `
+        <div style="text-align:center; border-bottom:2px solid var(--border); padding-bottom:12px; margin-bottom:16px;">
+            <strong style="font-size:15px; color:var(--text);">도배 자재 산출서 (Onu Global)</strong>
+        </div>
+        <div style="margin-bottom:12px; font-size:14px;"><strong>현장명: ${projName}</strong></div>
+        
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div>실 시공 면적</div>
+                <div class="stat-value">${totalArea.toFixed(2)}㎡</div>
+            </div>
+            <div class="stat-item">
+                <div>최종 필요량</div>
+                <div class="stat-value">${finalRoll} 롤</div>
+            </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border); padding-top:16px;">
+            ${summary.map(s => `
+                <div style="margin-bottom:6px; display:flex; justify-content:space-between; font-size:13px;">
+                    <span>• ${s.t}</span>
+                    <span>${s.w}m × ${s.h}m = <strong>${s.a.toFixed(2)}㎡</strong></span>
+                </div>
+            `).join('')}
+        </div>
+
+        <div style="margin-top:20px; background:var(--input-bg); padding:16px; border-radius:10px; border:1px solid var(--border); font-size:12px;">
+            자재 규격: ${rollSizeText}<br>
+            로스율: ${loss}% (적용 면적: ${adjustedArea.toFixed(2)}㎡)
+        </div>
+        <div style="margin-top:16px; font-size:11px; color:var(--text-muted); text-align:right;">
+            산출일시: ${now} | Onu Expert System v2.7
+        </div>
+    `;
+
+    document.getElementById('documentSection').innerHTML = docHtml;
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    saveToHistory(projName, now, finalRoll, docHtml);
+}
+
+function saveToHistory(projectName, date, finalRoll, docHtml) {
+    const history = JSON.parse(localStorage.getItem('wallpaper_history') || '[]');
+    const rawData = JSON.parse(localStorage.getItem('wallpaper_temp'));
+    history.unshift({ projectName, date, finalRoll, docHtml, rawData });
+    localStorage.setItem('wallpaper_history', JSON.stringify(history.slice(0, 20)));
+}
+
+function renderHistory() {
+    const history = JSON.parse(localStorage.getItem('wallpaper_history') || '[]');
+    const container = document.getElementById('historyList');
+    if(history.length === 0) { 
+        container.innerHTML = '<div style="text-align:center; padding:50px 0; color:var(--text-muted);">저장된 기록이 없습니다.</div>'; 
+        return; 
+    }
+    container.innerHTML = history.map((h, i) => `
+        <div class="history-item">
+            <div class="history-header">
+                <div><strong>${h.projectName}</strong><br><small style="color:var(--text-muted);">${h.date}</small></div>
+                <div style="text-align:right;"><span style="color:var(--primary); font-weight:800; font-size:18px;">${h.finalRoll} 롤</span></div>
+            </div>
+            <div style="padding:0 16px 16px 16px; display:flex; gap:8px;">
+                <button class="btn-sub" style="background:var(--primary); color:white; border:none;" onclick="loadToCalc(${i})">복구</button>
+                <button class="btn-sub" style="color:var(--error); border-color:var(--error); background:transparent;" onclick="deleteHistory(${i})">삭제</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function loadToCalc(index) {
+    const history = JSON.parse(localStorage.getItem('wallpaper_history') || '[]');
+    localStorage.setItem('wallpaper_temp', JSON.stringify(history[index].rawData));
+    loadTempData();
+    switchTab('calcTab');
+}
+
+function deleteHistory(index) {
+    if(confirm('삭제하시겠습니까?')) {
+        let history = JSON.parse(localStorage.getItem('wallpaper_history') || '[]');
+        history.splice(index, 1);
+        localStorage.setItem('wallpaper_history', JSON.stringify(history));
+        renderHistory();
+    }
+}
+
+function clearHistory() {
+    if(confirm('모든 기록을 삭제하시겠습니까?')) { localStorage.removeItem('wallpaper_history'); renderHistory(); }
+}
+
+/* 안드로이드 네이티브 브릿지 연결 함수 */
+function saveImageNative(id) {
+    const el = document.getElementById(id);
+    html2canvas(el, { scale: 2, backgroundColor: document.body.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff' }).then(canvas => {
+        const base64Data = canvas.toDataURL('image/png');
+        if (window.AndroidBridge) {
+            window.AndroidBridge.saveImage(base64Data);
+        } else {
+            // 웹 브라우저 테스트용
+            const link = document.createElement('a');
+            link.download = `도배산출서_${Date.now()}.png`;
+            link.href = base64Data;
+            link.click();
+        }
+    });
+}
+
+function shareResultNative(id) {
+    const el = document.getElementById(id);
+    html2canvas(el, {scale:2, backgroundColor:document.body.getAttribute('data-theme') === 'dark' ? '#1e293b' : '#ffffff'}).then(canvas => {
+        const base64Data = canvas.toDataURL('image/png');
+        const projName = document.getElementById('projectName').value || "미지정 현장";
+        if (window.AndroidBridge) {
+            window.AndroidBridge.shareResult(base64Data, `[도배 자재 산출 결과] 현장명: ${projName}`);
+        } else {
+            // 웹 브라우저 테스트용
+            canvas.toBlob(blob => {
+                const f = new File([blob], '도배결과.png', {type:'image/png'});
+                if(navigator.share && navigator.canShare({files:[f]})) {
+                    navigator.share({files:[f], title:'도배 자재 산출서'});
+                } else {
+                    alert('안드로이드 앱에서 실행해 주세요.');
+                }
+            });
+        }
+    });
+}
+</script>
+</body>
+</html>
