@@ -11,8 +11,8 @@ android {
         applicationId = "com.onu81.wallpaper"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3 // 2에서 3으로 올렸습니다.
-        versionName = "2.7" // 도배 관리 v2.7 버전에 맞춰 1.1에서 2.7로 올렸습니다.
+        versionCode = 4 // 3에서 4로 올렸습니다.
+        versionName = "2.8" // 2.7에서 2.8로 올렸습니다.
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
